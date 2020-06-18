@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>WebSocket test demo</title>
+</head>
+
+<body>
+</body>
+
+WebSocket url to connect to:
+<input id="wsconnectbox" type="text" size="30" />
+<button id="wsconnectbutton" type="button">Connect</button>
+<button id="wsdisconnectbutton" type="button" disabled>Disconnect</button>
+<hr>
+<p>The websocket on this server is configured to echo back any text in reverse</p>
+<input id="inputbox" type="text" size="100" />
+<button id="inputbutton" type="button">Send text to websocket</button>
+<div id="outputbox"></div>
+<script>
+    const wsconnectbox = document.getElementById('wsconnectbox');
+    const wsconnectbutton = document.getElementById('wsconnectbutton');
+    const wsdisconnectbutton = document.getElementById('wsdisconnectbutton');
+    const inputbox = document.getElementById('inputbox');
+    const inputbutton = document.getElementById('inputbutton');
+    const outputbox = document.getElementById('outputbox');
+    inputbutton.addEventListener('click', e => {
+        if(websocket == null) return;
+        const text = inputbox.value;
+        inputbox.value = '';
+        insertInOutputBox('>>> ' + text);
+        websocket.send(text);
+        inputbox.focus();
+    });
+
+    function insertInOutputBox(text) {
+        const innerdiv = document.createElement('div');
+        innerdiv.textContent = text;
+        outputbox.prepend(innerdiv);
+    }
+
+    let websocket;
+    wsconnectbutton.addEventListener('click', e => {
+        if(websocket != null) return;
+        wsconnectbutton.disabled = true;
+        wsconnectbox.disabled = true;
+        websocket = new WebSocket(wsconnectbox.value);
+        websocket.onopen = e => {
+            insertInOutputBox('[connection opened]');
+            wsdisconnectbutton.disabled = false;
+        }
+        websocket.onclose = e => {
+            insertInOutputBox(`[connection closed: ${e.code}]`);
+            wsdisconnectbutton.disabled = true;
+            wsconnectbutton.disabled = false;
+            wsconnectbox.disabled = false;
+            websocket = null;
+        }
+        websocket.onmessage = e => {
+            insertInOutputBox('<<< ' + e.data);
+        }
+    });
+
+    wsdisconnectbutton.addEventListener('click', e => {
+        if(websocket == null) return;
+        wsdisconnectbutton.disabled = true;
+        websocket.close();
+    });
+
+    // default to the same path as the page we're already on, but this doesnt have to be
+    wsconnectbox.value = document.URL.replace('http', 'ws');
+
+</script>
+
+</html>
